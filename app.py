@@ -1,63 +1,42 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
-import os
+import requests
 
-# --- Configuración inicial ---
-st.set_page_config(page_title="Registro de KM compartidos", page_icon="🚗")
+# URL del Apps Script
+APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxe2zD0BJd2OPs3bzBb01Dw5pcynIzSBYrGhub5Yxu94ctTHblD4F5ewmN9OBljLan3VQ/exec"
 
-st.title("🚗 Registro de KM compartidos")
+st.title("🚗 Registro de uso del auto (basado en odómetro)")
 
-# --- Inicializar CSV si no existe ---
-DATA_FILE = "data.csv"
+st.write("Registra el odómetro FINAL cada vez que dejas de usar el auto.")
 
-if not os.path.exists(DATA_FILE):
-    df = pd.DataFrame(columns=["Fecha", "Nombre", "KM"])
-    df.to_csv(DATA_FILE, index=False)
+usuario = st.selectbox(
+    "¿Quién usó el auto?",
+    ["Vicente", "Max", "Ambos"]
+)
 
-# --- Cargar datos ---
-df = pd.read_csv(DATA_FILE)
+odometro = st.number_input("Odómetro actual del auto (km)", min_value=0.0, step=0.1)
 
-# --- Formulario de registro ---
-st.subheader("Registrar nuevo uso")
+if st.button("Registrar uso"):
+    params = {"usuario": usuario, "odometro": odometro}
+    r = requests.get(APP_SCRIPT_URL, params=params)
 
-with st.form("registro_km"):
-    nombre = st.selectbox("¿Quién usó el auto?", ["Vicente", "Maz"])
-    km = st.number_input("¿Cuántos km hiciste?", min_value=0.0, step=0.1)
-    submit = st.form_submit_button("Guardar")
+    if r.text == "OK":
+        st.success("Registro guardado exitosamente.")
+    else:
+        st.error("Error: " + r.text)
 
-    if submit:
-        if km > 0:
-            nuevo = pd.DataFrame({
-                "Fecha": [datetime.now().strftime("%Y-%m-%d %H:%M")],
-                "Nombre": [nombre],
-                "KM": [km]
-            })
-            df = pd.concat([df, nuevo], ignore_index=True)
-            df.to_csv(DATA_FILE, index=False)
-            st.success("✅ Registro guardado correctamente.")
-        else:
-            st.warning("Ingresa una cantidad válida de km.")
+st.divider()
 
-# --- Mostrar registros ---
-st.subheader("Historial de usos")
-st.dataframe(df)
+st.subheader("📊 Historial completo")
 
-# --- Cálculo de totales ---
-if not df.empty:
-    totales = df.groupby("Nombre")["KM"].sum().reset_index()
-    total_km = totales["KM"].sum()
-    st.subheader("Totales acumulados")
-    st.write(f"**Total de kilómetros:** {total_km:.1f} km")
-    st.table(totales)
+# IMPORTANTE: poner tu sheet_id
+SHEET_ID = "15BIHvfKWqpAtbf59YXn6hMjXoqIR-q5nkOQ5oowtcYE"
 
-    # --- Cálculo del reparto ---
-    st.subheader("💰 Reparto del gasto de bencina")
-    gasto = st.number_input("Monto total de bencina ($)", min_value=0, step=1000)
+csv_url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
 
-    if gasto > 0 and total_km > 0:
-        totales["Proporción"] = totales["KM"] / total_km
-        totales["Pago"] = totales["Proporción"] * gasto
-        st.table(totales[["Nombre", "KM", "Pago"]])
-else:
-    st.info("Aún no hay registros. Agrega el primero arriba 👆")
+try:
+    df = pd.read_csv(csv_url)
+    st.dataframe(df)
+except:
+    st.warning("No se pudo cargar la hoja todavía.")
+
