@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body {
+        font-family: Arial;
+        margin: 30px;
+      }
+      .card {
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        margin-bottom: 25px;
+      }
+      button {
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      table {
+        width: 100%;
+        margin-top: 20px;
+        border-collapse: collapse;
+      }
+      th, td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h2>Registro de Uso del Auto</h2>
+
+    <div class="card">
+      <h3>Ingresar lectura del auto</h3>
+
+      <label>¿Quién usó el auto?</label><br>
+      <select id="conductor">
+        <option value="Vicente">Vicente</option>
+        <option value="Max">Max</option>
+        <option value="Ambos">Ambos</option>
+      </select>
+
+      <br><br>
+
+      <label>Odómetro actual (km):</label><br>
+      <input id="odometro" type="number" placeholder="Ej: 45678">
+
+      <br><br>
+
+      <button onclick="guardar()">Guardar registro</button>
+
+      <p id="msg"></p>
+    </div>
+
+    <div class="card">
+      <h3>Historial</h3>
+      <button onclick="cargar()">Actualizar tabla</button>
+      <div id="tabla"></div>
+    </div>
+
+    <script>
+      function guardar() {
+        const conductor = document.getElementById("conductor").value;
+        const odometro = Number(document.getElementById("odometro").value);
+
+        if (!odometro) {
+          document.getElementById("msg").innerHTML = "Ingresa un valor válido.";
+          return;
+        }
+
+        google.script.run.withSuccessHandler(msg => {
+          document.getElementById("msg").innerHTML = msg;
+          cargar();
+        }).guardarUso(conductor, odometro);
+      }
+
+      function cargar() {
+        google.script.run.withSuccessHandler(data => {
+          let html = "<table><tr><th>Fecha</th><th>Conductor</th><th>Odómetro</th><th>Km Recorridos</th></tr>";
+
+          data.forEach((row, i) => {
+            if (i === 0) return; // saltar encabezado
+            html += `<tr>
+                      <td>${new Date(row[0]).toLocaleString()}</td>
+                      <td>${row[1]}</td>
+                      <td>${row[2]}</td>
+                      <td>${row[3]}</td>
+                     </tr>`;
+          });
+
+          html += "</table>";
+          document.getElementById("tabla").innerHTML = html;
+
+        }).obtenerRegistros();
+      }
+
+      cargar();
+    </script>
+  </body>
+</html>
+
+
+
