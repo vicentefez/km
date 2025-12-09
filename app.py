@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 
 # URL del Apps Script
-APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwTcyZMXbbQgYKww54By60_ZLN3xiZtiCQKag54aKaowillt0-xSgcJnpr8HR_B2xpMCQ/exec"
+APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxqm4Jh5jhHjya6VYS9GW-dwbxUazmH0vWdO7oEW5HcDZ8MW73OQsQCm8uz4TtFuXQs/exec"
 
 st.title("🚗 Registro de uso del auto (basado en odómetro)")
 
@@ -39,3 +39,4 @@ try:
     st.dataframe(df)
 except:
     st.warning("No se pudo cargar la hoja todavía.")
+
